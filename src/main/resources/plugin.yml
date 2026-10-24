@@ -14,7 +14,6 @@ softdepend:
   - SimpleClans
   - BetterTeams
   - UltimateClans
-  - PlaceholderAPI
 
 commands:
   ps:

@@ -94,9 +94,6 @@ public class RyxProtection extends JavaPlugin {
     private FactoryListener       factoryListener;
     private GemCompressorListener compressorListener;
 
-    // ── PlaceholderAPI (opcional) ──────────────────────
-    private boolean placeholderAPI = false;
-
     // ── Restricción de comandos ────────────────────────
     private CommandRestrictor commandRestrictor;
 
@@ -126,17 +123,6 @@ public class RyxProtection extends JavaPlugin {
         githubUpdater = new GitHubUpdater(this);
         getCommand("ryx").setExecutor(githubUpdater);
         githubUpdater.checkForUpdate();
-
-        // 2b. PlaceholderAPI (softdepend)
-        if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
-            try {
-                new com.ryxmc.protection.hook.PlaceholderHook(this).register();
-                placeholderAPI = true;
-                getLogger().info("[PlaceholderAPI] Placeholders de RyxProtections registrados.");
-            } catch (Exception e) {
-                getLogger().warning("[PlaceholderAPI] Error registrando placeholders: " + e.getMessage());
-            }
-        }
 
         // 3. Managers de datos
         regionStore              = new RegionStore(this);
@@ -208,11 +194,10 @@ public class RyxProtection extends JavaPlugin {
         pm.registerEvents(new ProtectionListener(this),       this);
 
         long elapsed = System.currentTimeMillis() - start;
-        getLogger().info("[RyxMC-Protections] v4.0.0 activado en " + elapsed + "ms."
+        getLogger().info("[RyxMC-Protections] v4.0.1 activado en " + elapsed + "ms."
                 + " Regiones: " + regionStore.getAll().size()
                 + " | Fábricas: " + factoryManager.getAllFactories().size()
-                + " | Compresores: " + compressorManager.getAll().size()
-                + " | PlaceholderAPI: " + (placeholderAPI ? "sí" : "no"));
+                + " | Compresores: " + compressorManager.getAll().size());
     }
 
     @Override
