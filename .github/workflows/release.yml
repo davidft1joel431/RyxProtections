@@ -1,0 +1,92 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout del código
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Configurar Java 21 y Maven
+      - name: Set up Java 21 and Maven
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      # 3. Compilar el plugin con Maven
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      # 4. Obtener la versión del pom.xml
+      - name: Get version from pom.xml
+        id: get_version
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version detectada: $VERSION"
+
+      # 5. Actualizar version.txt con la versión actual
+      - name: Update version.txt
+        run: |
+          echo "${{ steps.get_version.outputs.VERSION }}" > version.txt
+
+      # 6. Crear un tag de release (ej. v4.0.1)
+      - name: Create git tag
+        id: create_tag
+        run: |
+          TAG="v${{ steps.get_version.outputs.VERSION }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "El tag $TAG ya existe, saltando creación."
+            echo "TAG_EXISTS=true" >> $GITHUB_OUTPUT
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git tag "$TAG"
+            git push origin "$TAG"
+            echo "TAG_EXISTS=false" >> $GITHUB_OUTPUT
+          fi
+
+      # 7. Crear la Release en GitHub y adjuntar el JAR
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        if: steps.create_tag.outputs.TAG_EXISTS != 'true'
+        with:
+          tag_name: v${{ steps.get_version.outputs.VERSION }}
+          name: RyxProtections ${{ steps.get_version.outputs.VERSION }}
+          body: |
+            ## RyxProtections ${{ steps.get_version.outputs.VERSION }}
+
+            Cambios en esta versión:
+            - Sistema de protecciones completo para PaperMC 1.21.4
+            - Menús modernos con animaciones de partículas
+            - Sistema DTR con regeneración y cooldown
+            - Fábricas de energía con upgrades (velocidad, proceso, duplicador, tier)
+            - Compresor de gemas con sistema de upgrade (4 niveles)
+            - Sistema de tubos, dianas direccionales y combinadores
+            - Fábricas industriales multi-bloque (3×1×1)
+            - Auto-actualización desde GitHub (/ryx update)
+            - PlaceholderAPI integration
+            - Bloqueo de comandos para usuarios default (LuckPerms)
+            - Persistencia de fábricas al romper/colocar
+          draft: false
+          prerelease: false
+          files: target/RyxProtections-*.jar
+
+      # 8. Confirmar cambios de version.txt si se modificó
+      - name: Commit version.txt changes
+        if: steps.create_tag.outputs.TAG_EXISTS != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add version.txt
+          git commit -m "Update version.txt to ${{ steps.get_version.outputs.VERSION }}" || echo "No changes to commit"
+          git push origin main
