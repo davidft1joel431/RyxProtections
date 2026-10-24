@@ -1,0 +1,93 @@
+# ═══════════════════════════════════════════════════════════════
+#  RyxProtection v3.1 — config.yml
+# ═══════════════════════════════════════════════════════════════
+
+plugin:
+  debug: false
+
+# ─── PROTECCIONES ───────────────────────────────────────────────
+protection:
+  max_per_player: 1
+  min_distance: 20
+  disabled_worlds:
+    - world_nether
+    - world_the_end
+
+  # ── Combate y física ────────────────────────────────────────
+  # PvP global: si false, NINGUNA región tendrá PvP (ni raideables)
+  # Las regiones raideables siempre permiten PvP independientemente.
+  pvp_enabled: false              # [FIX] default OFF — evita pérdida de DTR accidental
+  allow_pvp_toggle: true          # los dueños pueden activar PvP en SU región
+  block_explosions: true          # bloquear TNT/explosiones en regiones no raideables
+  preview_on_place: true          # partículas de radio al clic derecho al aire
+
+  # ── Comandos de región ────────────────────────────────────
+  allow_home: true                # /ps home
+  allow_unclaim: true             # /ps unclaim (eliminar propia región)
+  allow_members: true             # /ps add /ps remove
+  allow_blacklist: true           # /ps blacklist
+  allow_upgrade: true             # /ps upgrade (mejorar nivel de bloque)
+  allow_shop: true                # /ps tienda (comprar bloques)
+  allow_energy: true              # /ps energy (gemas/DTR)
+
+  # ── Fábricas y compresores ───────────────────────────────
+  allow_factory: true             # sistema de fábricas de energía (/factory)
+  allow_compressor: true          # compresor de gemas
+
+# ─── OPCIONES DE REGIÓN ─────────────────────────────────────────
+region:
+  allow_lock: true                # /ps lock (bloquear visitantes)
+  allow_motd: true                # /ps motd (descripción holograma)
+  allow_mob_toggle: true          # /ps mobs (spawn de mobs)
+  allow_transfer: true            # /ps transfer (transferir propiedad)
+  max_name_length: 64
+  max_motd_length: 64
+
+# ─── DTR ────────────────────────────────────────────────────────
+dtr:
+  broadcast_raidable: true        # anunciar al servidor cuando región es raideable
+  broadcast_restored: true        # anunciar al servidor cuando región se restaura
+  upgrade_cost: 10                # PP por compra de +1 DTR máximo
+
+  # DTR base por nivel (referencia — se configura en ProtectionBlock.java)
+  # Nivel 1=2.0, 2=3.0, 3=4.0, 4=5.0, 5=6.0, 6=8.0, 7=10.0
+  base_by_level:
+    "1": 2.0
+    "2": 3.0
+    "3": 4.0
+    "4": 5.0
+    "5": 6.0
+    "6": 8.0
+    "7": 10.0
+
+# ─── TIENDA DE BLOQUES ──────────────────────────────────────────
+# Ningún bloque es gratis — la economía del servidor depende de esto.
+shop:
+  enabled: true
+  prices:
+    level_1:    50000.0     # Básico     — accesible pero no gratis
+    level_2:   200000.0     # Carbón
+    level_3:   500000.0     # Hierro
+    level_4:  1200000.0     # Oro
+    level_5:  3000000.0     # Diamante
+    level_6:  7500000.0     # Esmeralda [PREMIUM]
+    level_7: 18000000.0     # Netherite [PREMIUM]
+
+# ─── FÁBRICAS ───────────────────────────────────────────────────
+factory:
+  max_per_player: 3
+  shop_price: 5000.0
+  compressor_price: 8000.0
+  model_medium_price: 1500.0
+  model_large_price: 5000.0
+
+# ─── HOLOGRAMAS ─────────────────────────────────────────────────
+hologram:
+  enabled: true
+  height_offset: 1.4
+  update_interval: 600            # ticks entre actualización normal (30s)
+  update_interval_fast: 5         # ticks para raideables (0.25s, countdown preciso)
+
+# ─── ECONOMÍA ───────────────────────────────────────────────────
+economy:
+  symbol: "$"

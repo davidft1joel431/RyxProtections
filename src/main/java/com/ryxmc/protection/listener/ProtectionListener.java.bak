@@ -1,0 +1,165 @@
+package com.ryxmc.protection.listener;
+
+import com.ryxmc.protection.RyxProtection;
+import com.ryxmc.protection.config.BlockCfg;
+import com.ryxmc.protection.manager.PreviewManager;
+import com.ryxmc.protection.manager.RegionStore;
+import com.ryxmc.protection.util.Txt;
+import org.bukkit.*;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
+import org.bukkit.event.*;
+import org.bukkit.event.block.*;
+import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.player.*;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
+
+import java.util.*;
+
+public class ProtectionListener implements Listener {
+
+    private final RyxProtection plugin;
+    private final Map<UUID, String> lastRegion = new HashMap<>();
+    private final Map<UUID, Long>   clickCD    = new HashMap<>();
+    private static final long CD_MS = 300L;
+
+    public ProtectionListener(RyxProtection plugin) { this.plugin = plugin; }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onBlockPlace(BlockPlaceEvent event) {
+        Player p = event.getPlayer();
+        BlockCfg bc = plugin.getBlockLoader().getByItem(event.getItemInHand());
+        if (bc == null) return;
+
+        if (!p.hasPermission("ryx.protection.use")) {
+            p.sendMessage(Txt.err("No tienes permiso para colocar bloques de protección."));
+            event.setCancelled(true); return;
+        }
+        int maxOwned = plugin.getConfig().getInt("protection.max_per_player", 1);
+        if (plugin.getRegionStore().getOwnedByPlayer(p.getUniqueId()).size() >= maxOwned) {
+            p.sendMessage(Txt.err("Ya tienes §e" + maxOwned + "§c región(es). Usa §f/ps unclaim§c para liberar una."));
+            event.setCancelled(true); return;
+        }
+        String regionId = plugin.getRegionStore().createRegion(
+                p, event.getBlockPlaced().getLocation(), bc.getXRadius(), bc.getZRadius(), bc.getAlias());
+        if (regionId == null) {
+            p.sendMessage(Txt.err("No puedes colocar aquí: zona muy cerca de otra región."));
+            event.setCancelled(true); return;
+        }
+        plugin.getUpgradeManager().initRegion(regionId);
+        plugin.getDtrManager().register(regionId, bc.getBaseDtr());
+        plugin.getDtrManager().recalcMax(regionId);
+        Bukkit.getScheduler().runTaskLater(plugin,
+                () -> plugin.getHologramManager().spawnRegionHologram(regionId), 2L);
+        plugin.getPreviewManager().startRegionPreview(p, regionId);
+        p.sendMessage(Txt.ok("§a✔ Región §e" + regionId + "§a creada. Radio: §f±" + bc.getXRadius()
+                + "§a. Usa §f/ps info§a para gestionarla."));
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onBlockBreak(BlockBreakEvent event) {
+        Player p = event.getPlayer();
+        RegionStore.RegionRecord r = plugin.getRegionStore().getByBlockLoc(event.getBlock().getLocation());
+        if (r == null) return;
+        if (!r.ownerUUID.equals(p.getUniqueId()) && !p.hasPermission("ryx.admin")) {
+            p.sendMessage(Txt.err("No puedes romper el bloque de §e" + r.ownerName + "§c."));
+            event.setCancelled(true); return;
+        }
+        event.setCancelled(true);
+        plugin.getGuiManager().openConfirmRemoveGui(p, r.regionId);
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL)
+    public void onInteract(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        if (event.getHand() != EquipmentSlot.HAND) return;
+        Block b = event.getClickedBlock();
+        if (b == null) return;
+        RegionStore.RegionRecord r = plugin.getRegionStore().getByBlockLoc(b.getLocation());
+        if (r == null) return;
+        Player p = event.getPlayer();
+        long now = System.currentTimeMillis();
+        if (now - clickCD.getOrDefault(p.getUniqueId(), 0L) < CD_MS) return;
+        clickCD.put(p.getUniqueId(), now);
+        event.setCancelled(true);
+        plugin.getGuiManager().openInfoGui(p, r.regionId);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerDeath(org.bukkit.event.entity.PlayerDeathEvent event) {
+        Player dead = event.getEntity();
+        List<String> regions = plugin.getRegionStore().getRegionsByPlayer(dead.getUniqueId());
+        if (!regions.isEmpty()) plugin.getDtrManager().applyDeath(dead, regions);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onMove(PlayerMoveEvent event) {
+        if (event.getFrom().getBlockX() == event.getTo().getBlockX()
+                && event.getFrom().getBlockZ() == event.getTo().getBlockZ()) return;
+        Player p = event.getPlayer();
+        RegionStore.RegionRecord current = plugin.getRegionStore().getAt(event.getTo());
+        String currentId = current != null ? current.regionId : null;
+        String lastId    = lastRegion.get(p.getUniqueId());
+        if (Objects.equals(currentId, lastId)) return;
+        lastRegion.put(p.getUniqueId(), currentId);
+        if (currentId != null) {
+            String name     = plugin.getRegionStore().getDisplayName(currentId);
+            boolean raidable = plugin.getDtrManager().isRaidable(currentId);
+            String dtr      = plugin.getDtrManager().format(currentId);
+            String msg;
+            if (raidable) {
+                msg = "§4⚠ §cRAIDEABLE §8| §e" + name + " §8— §7Dueño: §f" + current.ownerName;
+            } else {
+                boolean isOwner  = current.ownerUUID.equals(p.getUniqueId());
+                boolean isMember = plugin.getRegionStore().getRole(currentId, p.getUniqueId()) != null;
+                String prefix = isOwner ? "§e⬛ Tu región: " : isMember ? "§b⬛ Región aliada: " : "§7⬛ Región: ";
+                msg = prefix + "§f" + name + " §8| §9DTR: §f" + dtr;
+            }
+            p.sendActionBar(net.kyori.adventure.text.Component.text(msg));
+        } else {
+            p.sendActionBar(net.kyori.adventure.text.Component.text("§8Zona sin protección"));
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onItemChange(PlayerItemHeldEvent event) {
+        Player p = event.getPlayer();
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            ItemStack newItem = p.getInventory().getItem(event.getNewSlot());
+            BlockCfg bc = plugin.getBlockLoader().getByItem(newItem);
+            if (bc != null) {
+                plugin.getPreviewManager().startPreview(p, bc, PreviewManager.DUST_HOLD);
+            } else if (plugin.getPreviewManager().getMode(p.getUniqueId())
+                    == PreviewManager.PreviewMode.BLOCK_HOLD) {
+                plugin.getPreviewManager().stopPreview(p.getUniqueId());
+            }
+        }, 1L);
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onExplosion(EntityExplodeEvent event) {
+        if (!plugin.getConfig().getBoolean("protection.block_explosions", true)) return;
+        event.blockList().removeIf(b -> {
+            RegionStore.RegionRecord r = plugin.getRegionStore().getAt(b.getLocation());
+            return r != null && !plugin.getDtrManager().isRaidable(r.regionId);
+        });
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onBlockExplosion(BlockExplodeEvent event) {
+        if (!plugin.getConfig().getBoolean("protection.block_explosions", true)) return;
+        event.blockList().removeIf(b -> {
+            RegionStore.RegionRecord r = plugin.getRegionStore().getAt(b.getLocation());
+            return r != null && !plugin.getDtrManager().isRaidable(r.regionId);
+        });
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        UUID uuid = event.getPlayer().getUniqueId();
+        lastRegion.remove(uuid);
+        clickCD.remove(uuid);
+        plugin.getPreviewManager().stopPreview(uuid);
+    }
+}

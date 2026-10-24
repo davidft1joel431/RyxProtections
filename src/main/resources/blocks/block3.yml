@@ -1,0 +1,10 @@
+alias: "block3"
+displayName: "§7§lBloque de Hierro"
+description: "Protección sólida con DTR mejorado."
+material: "IRON_ORE"
+customModelData: 3003
+price: 15000
+xRadius: 20
+zRadius: 20
+upgradesTo: "block4"
+baseDtr: 6.0

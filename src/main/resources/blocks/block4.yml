@@ -1,0 +1,10 @@
+alias: "block4"
+displayName: "§6§lBloque de Oro"
+description: "Protección avanzada para veteranos."
+material: "GOLD_ORE"
+customModelData: 3004
+price: 40000
+xRadius: 25
+zRadius: 25
+upgradesTo: "block5"
+baseDtr: 7.0

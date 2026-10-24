@@ -1,0 +1,10 @@
+alias: "block2"
+displayName: "§8§lBloque de Carbón"
+description: "Protección reforzada con más radio."
+material: "COAL_ORE"
+customModelData: 3002
+price: 5000
+xRadius: 15
+zRadius: 15
+upgradesTo: "block3"
+baseDtr: 5.5

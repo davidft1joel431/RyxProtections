@@ -1,0 +1,10 @@
+alias: "block5"
+displayName: "§b§lBloque de Diamante"
+description: "Protección de élite. La mejor disponible."
+material: "DIAMOND_ORE"
+customModelData: 3005
+price: 100000
+xRadius: 30
+zRadius: 30
+upgradesTo: ""
+baseDtr: 8.0

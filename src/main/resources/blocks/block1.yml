@@ -1,0 +1,10 @@
+alias: "block1"
+displayName: "§7§lBloque Básico"
+description: "Protección básica. Ideal para comenzar."
+material: "STONE"
+customModelData: 3001
+price: 0
+xRadius: 10
+zRadius: 10
+upgradesTo: "block2"
+baseDtr: 5.0

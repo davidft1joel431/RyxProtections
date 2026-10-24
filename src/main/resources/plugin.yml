@@ -1,0 +1,178 @@
+name: RyxProtections
+version: 4.0.1
+main: com.ryxmc.protection.RyxProtection
+api-version: '1.21'
+authors: [ RyxMC ]
+description: Sistema de protecciones completo para RyxMC — Paper 1.21.4 (menús modernos, animaciones y DTR)
+
+depend:
+  - WorldGuard
+  - WorldEdit
+  - Vault
+
+softdepend:
+  - SimpleClans
+  - BetterTeams
+  - UltimateClans
+  - PlaceholderAPI
+
+commands:
+  ps:
+    description: Gestión de regiones de protección
+    usage: /ps [subcomando]
+    aliases: [ rps, protection, proteccion ]
+    permission: ryx.protection.use
+
+  dtr:
+    description: Ver y gestionar el DTR del equipo
+    usage: /dtr [subcomando]
+    aliases: [ ]
+    permission: ryx.dtr.view
+
+  factory:
+    description: Gestión de fábricas de energía
+    usage: /factory [subcomando]
+    aliases: [ fabrica, fac ]
+    permission: ryx.factory.use
+
+  pp:
+    description: Gestión de Puntos de Protección
+    usage: /pp [subcomando]
+    aliases: [ puntos ]
+    permission: ryx.protection.use
+
+  war:
+    description: Sistema de Guerra de Clanes
+    usage: /war [start|stop|status|duration|top|help]
+    aliases: [ guerra, event, evento ]
+    permission: ryx.war.status
+
+  ryx:
+    description: Actualización y gestión del plugin RyxProtections
+    usage: /ryx [check|update|version]
+    aliases: [ ryxprotections ]
+    permission: ryx.admin
+
+permissions:
+
+  # ── Protección ──────────────────────────────────────
+  ryx.protection.use:
+    description: Usar el sistema de protecciones
+    default: true
+  ryx.protection.home:
+    description: Teletransportarse a la región (/ps home)
+    default: true
+  ryx.protection.rename:
+    description: Renombrar la región (/ps name)
+    default: true
+  ryx.protection.pvp:
+    description: Cambiar PvP de la región (/ps pvp)
+    default: true
+  ryx.protection.unclaim:
+    description: Eliminar la región propia (/ps unclaim)
+    default: true
+  ryx.protection.lock:
+    description: Bloquear visitantes de la región (/ps lock)
+    default: true
+  ryx.protection.motd:
+    description: Configurar descripción del holograma (/ps motd)
+    default: true
+  ryx.protection.mobs:
+    description: Toggle de mobs en la región (/ps mobs)
+    default: true
+  ryx.protection.transfer:
+    description: Transferir propiedad de la región (/ps transfer)
+    default: true
+  ryx.protection.dtr.upgrade:
+    description: Comprar mejoras de DTR máximo
+    default: true
+  ryx.protection.preview:
+    description: Vista previa de radio con partículas
+    default: true
+
+  # ── GUI / Animaciones ───────────────────────────────
+  ryx.gui.animation:
+    description: Activar/desactivar animaciones de menú
+    default: true
+
+  # ── DTR ─────────────────────────────────────────────
+  ryx.dtr.view:
+    description: Ver el DTR propio (/dtr)
+    default: true
+  ryx.dtr.bypass:
+    description: Ignorar penalidades DTR al morir
+    default: false
+
+  # ── Upgrades ────────────────────────────────────────
+  ryx.upgrade.view:
+    description: Ver GUI de mejoras
+    default: true
+  ryx.upgrade.premium:
+    description: Acceder a niveles Premium (6-7)
+    default: false
+
+  # ── Fábricas ────────────────────────────────────────
+  ryx.factory.use:
+    description: Usar el sistema de fábricas
+    default: true
+  ryx.factory.place:
+    description: Colocar fábricas de energía
+    default: true
+  ryx.compressor.place:
+    description: Colocar compresores de gemas
+    default: true
+  ryx.compressor.buy:
+    description: Comprar compresores de gemas en la tienda
+    default: true
+  ryx.pp.exchange:
+    description: Intercambiar gemas por PP
+    default: true
+
+  # ── Vista previa ─────────────────────────────────────
+  ryx.preview.use:
+    description: Usar vista previa de radio con partículas
+    default: true
+
+  # ── Guerra ────────────────────────────────────────────
+  ryx.war.status:
+    description: Ver estado de la guerra y rankings (/war status, /war top)
+    default: true
+
+  # ── Admin — nodo raíz ────────────────────────────────
+  ryx.admin:
+    description: Acceso completo de administrador
+    default: op
+    children:
+      ryx.admin.dtr:          true
+      ryx.admin.region:       true
+      ryx.admin.pp:           true
+      ryx.admin.factory:      true
+      ryx.compressor.buy:     true
+      ryx.dtr.bypass:         true
+      ryx.upgrade.premium:    true
+      ryx.war.status:         true
+      ryx.protection.lock:         true
+      ryx.protection.motd:         true
+      ryx.protection.mobs:         true
+      ryx.protection.transfer:     true
+      ryx.protection.dtr.upgrade:  true
+      ryx.protection.preview:      true
+      ryx.gui.animation:           true
+      ryx.admin.updater:           true
+
+  ryx.admin.updater:
+    description: Actualizar el plugin desde GitHub
+    default: op
+
+  ryx.admin.dtr:
+    description: Administrar DTR de regiones (setdtr, resetdtr)
+    default: op
+  ryx.admin.region:
+    description: Administrar regiones de jugadores (forceremove, setlevel)
+    default: op
+  ryx.admin.pp:
+    description: Administrar PP de jugadores (setpp, addpp)
+    default: op
+  ryx.admin.factory:
+    description: Administrar fábricas (givefactory, givecompressor)
+    default: op
