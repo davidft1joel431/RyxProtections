@@ -4,14 +4,20 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: write
+
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout del código
+      # 1. Checkout del código con persistencia de credenciales
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       # 2. Configurar Java 21 y Maven
       - name: Set up Java 21 and Maven
@@ -41,6 +47,8 @@ jobs:
       # 6. Crear un tag de release (ej. v4.0.1)
       - name: Create git tag
         id: create_tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="v${{ steps.get_version.outputs.VERSION }}"
           if git rev-parse "$TAG" >/dev/null 2>&1; then
@@ -84,6 +92,8 @@ jobs:
       # 8. Confirmar cambios de version.txt si se modificó
       - name: Commit version.txt changes
         if: steps.create_tag.outputs.TAG_EXISTS != 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
